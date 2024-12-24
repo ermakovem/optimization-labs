@@ -2,62 +2,58 @@ I. MaxMemory.java
 
 1. -Xmx512m
 
-	`Max memory: 460 MB`
+	`Max memory: 494 MB`
 
 -Xmx задаёт максимальный размер кучи, поэтому размер стал равен 512 МБ.
 
 2. -Xmx512m -Xms512m
 
-	`Max memory: 493 MB`
+	`Max memory: 494 MB`
 
 -Xms задаёт начальный (минимальный) размер кучи. Разница лишь в том, что теперь начальная куча (-Xms) тоже 512 МБ, 
 т.е. при старте JVM сразу выделит полный объём, но метод maxMemory() всё так же покажет ту же верхнюю границу.
 
 3. -Xmx512m -Xms512m -XX:+PrintGCDetails
 
-`[0.002s][warning][gc] -XX:+PrintGCDetails is deprecated. Will use -Xlog:gc* instead.
-[0.005s][info   ][gc,init] CardTable entry size: 512
-[0.005s][info   ][gc     ] Using G1
-[0.007s][info   ][gc,init] Version: 23.0.1+11-39 (release)
-[0.007s][info   ][gc,init] CPUs: 28 total, 28 available
-[0.007s][info   ][gc,init] Memory: 32581M
-[0.007s][info   ][gc,init] Large Page Support: Disabled
-[0.007s][info   ][gc,init] NUMA Support: Disabled
-[0.007s][info   ][gc,init] Compressed Oops: Enabled (32-bit)
-[0.007s][info   ][gc,init] Heap Region Size: 1M
-[0.007s][info   ][gc,init] Heap Min Capacity: 512M
-[0.007s][info   ][gc,init] Heap Initial Capacity: 512M
-[0.007s][info   ][gc,init] Heap Max Capacity: 512M
-[0.007s][info   ][gc,init] Pre-touch: Disabled
-[0.007s][info   ][gc,init] Parallel Workers: 20
-[0.007s][info   ][gc,init] Concurrent Workers: 5
-[0.007s][info   ][gc,init] Concurrent Refinement Workers: 20
-[0.007s][info   ][gc,init] Periodic GC: Disabled
-[0.013s][info   ][gc,metaspace] CDS archive(s) mapped at: [0x0000019a80000000-0x0000019a80d70000-0x0000019a80d70000), size 14090240, SharedBaseAddress: 0x0000019a80000000, ArchiveRelocationMode: 1.
-[0.013s][info   ][gc,metaspace] Compressed class space mapped at: 0x0000019a81000000-0x0000019ac1000000, reserved size: 1073741824
-[0.013s][info   ][gc,metaspace] Narrow klass base: 0x0000019a80000000, Narrow klass shift: 0, Narrow klass range: 0x41000000
-Max memory: 512 MB[0.090s][info   ][gc,heap,exit] Heap
-[0.090s][info   ][gc,heap,exit]  garbage-first heap   total reserved 524288K, committed 524288K, used 8192K [0x00000000e0000000, 0x0000000100000000)
-[0.090s][info   ][gc,heap,exit]   region size 1024K, 8 young (8192K), 0 survivors (0K)
-[0.090s][info   ][gc,heap,exit]  Metaspace       used 993K, committed 1216K, reserved 1114112K
-[0.090s][info   ][gc,heap,exit]   class space    used 77K, committed 192K, reserved 1048576K`
+`Max memory: 494 MB[0.099s][info   ][gc,heap,exit] Heap
+[0.099s][info   ][gc,heap,exit]  def new generation   total 157248K, used 28021K [0x00000000e0000000, 0x00000000eaaa0000, 0x00000000eaaa0000)
+[0.099s][info   ][gc,heap,exit]   eden space 139776K,  20% used [0x00000000e0000000, 0x00000000e1b5d5a8, 0x00000000e8880000)
+[0.099s][info   ][gc,heap,exit]   from space 17472K,   0% used [0x00000000e8880000, 0x00000000e8880000, 0x00000000e9990000)
+[0.099s][info   ][gc,heap,exit]   to   space 17472K,   0% used [0x00000000e9990000, 0x00000000e9990000, 0x00000000eaaa0000)
+[0.099s][info   ][gc,heap,exit]  tenured generation   total 349568K, used 0K [0x00000000eaaa0000, 0x0000000100000000, 0x0000000100000000)
+[0.099s][info   ][gc,heap,exit]    the space 349568K,   0% used [0x00000000eaaa0000, 0x00000000eaaa0000, 0x00000000eaaa0200, 0x0000000100000000)
+[0.099s][info   ][gc,heap,exit]  Metaspace       used 1070K, committed 1280K, reserved 1114112K
+[0.099s][info   ][gc,heap,exit]   class space    used 85K, committed 192K, reserved 1048576K`
 
-Using G1 — включён сборщик мусора G1;
-Heap Region Size: 1M — G1 дробит кучу на регионы по 1 МБ каждый;
-Heap Min Capacity / Initial Capacity / Max Capacity = 512M — из-за -Xms512m -Xmx512m начальный и максимальный размер кучи совпадают (512 МБ).
+а) Вывод из кода: Max memory: 494 MB.
 
-Видим, что G1 GC инициализировался с кучей в 512 МБ (как мы и задали).
-JVM успела создать несколько десятков классов (JDK-классы + класс MaxMemory), занять чуть меньше 1 МБ в Metaspace + 8 МБ в куче.
-«Max memory: 512 MB» подтверждает, что Runtime.getRuntime().maxMemory() даёт ровно 512.
-Строки после [gc,heap,exit] и [gc,metaspace] — это сводка: сколько памяти было фактически занято и как она была поделена на регионы.
+Это результат вызова Runtime.getRuntime().maxMemory(), который показывает около 494 МБ, а не ровно 512 МБ. Разница возникает из‑за внутренних выравниваний и резервирований в JVM — HotSpot зачастую не показывает «в лоб» значение -Xmx.
 
-Также видно, что на машине 28 доступных процессоров, системная оперативная память ~32 ГБ (Memory: 32581M), но самой JVM под кучу выделено максимум 512 МБ согласно флагам.
+б) Разбиение Heap (кучи) на поколения:
+
+New generation (молодое поколение) «total 157248K» (примерно 153 МБ), внутри него:
+Eden space: 139776K (~136 МБ)
+From space: 17472K (~17 МБ)
+To space: 17472K (~17 МБ)
+Tenured generation (старшее поколение) «total 349568K» (~341 МБ)
+Суммарно выходит около 153 МБ + 341 МБ = 494 МБ. Именно это (с учётом мелких округлений) и отражается в логе — совпадает с «Max memory: 494 MB».
+
+
+с) Metaspace:
+Отдельно показаны: used 1070K, committed 1280K, reserved 1114112K.
+Metaspace (и Class space) не входят в maxMemory() — оно ограничивает только heap.
 
 4. -Xms512m -Xmx512m -XX:SurvivorRatio=100
+   
   	`Max memory: 510 MB`
-5. -Xmx512m -XX:+UseG1GC
+   
+   Параметр -XX:SurvivorRatio=100 говорит о том, как именно делятся пространства Eden и Survivor внутри молодого поколения. Но это внутреннее деление всё той же кучи.
+6. -Xmx512m -XX:+UseG1GC
+   
     `Max memory: 512 MB`
-6. 
+   
+   UseG1GC включает новый сборщик мусора G1, который иначе управляет кучей (разделяет её на регионы)
+8. 
 II. Phantom references
 1. Без -Dphantom.refs=true, при маленькой куче 24 МБ.
 Почти нет частых сборок мусора, потому что в итоге не расходуется память на новые объекты (по сути, все PhantomReference указывают на один и тот же substitute).
